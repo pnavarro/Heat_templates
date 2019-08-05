@@ -1,0 +1,32 @@
+heat_template_version: pike
+
+description: Create and attach volume
+
+parameters:
+
+  name:
+    type: string
+    description: volume name
+
+  volume_size:
+    type: number
+    default: 1
+    description: Cinder Volume default size
+
+  instance:
+    type: string
+    description: Instance ID
+
+resources:
+  volume:
+    type: OS::Cinder::Volume
+    properties:
+      name: { get_param: name }
+      size: { get_param: volume_size }
+
+
+  volumes_atachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      instance_uuid: { get_param: instance }
+      volume_id: { get_resource: volume }
