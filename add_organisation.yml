@@ -1,0 +1,143 @@
+heat_template_version: newton
+description: creation d un template
+
+parameters:
+ tenant_name:
+   type: string
+   description: organisation name
+ tenant_id:
+   type: string
+   description: organisation ID
+ environment:
+   type: string
+   description: organisation ID
+resources:
+ organisation_tenant:
+   type: OS::Keystone::Project
+   properties:
+     name:
+       str_replace:
+         template: tenant%-%env%-tenantID%
+         params:
+           "%env%": {get_param: environment}
+           "tenant%": {get_param: tenant_name}
+           "tenantID%": {get_param: tenant_id}
+     domain: default
+     description: {get_param: tenant_name}
+
+    #   : ======================================================
+    #   : Quota definitions - those that are commented are
+    #   : there in case of quota enforcement needs later in time
+    #   : To activate them uncomment, and update accordingly
+    #   : the set_quotas.yaml file.
+    #   : ======================================================
+
+    #  quota-network-csh:
+    #    type: OS::Neutron::Quota
+    #    properties:
+    #      project: {get_resource: organisation_tenant}
+    #      floatingip: 0
+
+ quota-nova-csh:
+   type: OS::Nova::Quota
+   properties:
+     project: {get_resource: organisation_tenant}
+     cores: 10
+     fixed_ips: 5
+     floating_ips: 5
+     instances: 5
+     ram: 10240
+
+ cinder_quota:
+   type: OS::Cinder::Quota
+   properties:
+     project: {get_resource: organisation_tenant}
+     gigabytes: 10240
+     volumes:  10
+     snapshots: 5
+
+ Internal_net:
+   type: OS::Neutron::Net
+   properties:
+     name: "Internal"
+     tenant_id: {get_resource: organisation_tenant}
+
+ Extrenal_net:
+   type: OS::Neutron::Net
+   properties:
+     name: "Extrenal"
+     tenant_id: {get_resource: organisation_tenant}
+
+ Internal_subnet:
+   type: OS::Neutron::Subnet
+   properties:
+     name: "Internal-subnet"
+     tenant_id: {get_resource: organisation_tenant}
+     network_id: {get_resource: Internal_net}
+     cidr: "192.168.10.0/24"
+
+ Extrenal_subnet:
+   type: OS::Neutron::Subnet
+   properties:
+     name: "Extrenal-subnet"
+     tenant_id: {get_resource: organisation_tenant}
+     network_id: {get_resource: Extrenal_net}
+     cidr: "10.0.0.0/24"
+     gateway_ip: "10.0.0.1"
+     enable_dhcp: True
+     dns_nameservers: ["55.223.10.1"]
+ organisation_Router:
+   type: OS::Neutron::Router
+   properties:
+     name: Router
+     external_gateway_info:
+       network: "net-external"
+     value_specs:
+       tenant_id: {get_resource: organisation_tenant}
+
+ organisation_router_Extrenal_interfaces:
+   type: OS::Neutron::RouterInterface
+   properties:
+     router_id: {get_resource: organisation_Router}
+     subnet_id: {get_resource: Extrenal_subnet}
+
+# organisation_router_Internal_interfaces:
+#   type: OS::Neutron::RouterInterface
+#   properties:
+#     router_id: {get_resource: organisation_Router}
+#     subnet_id: {get_resource: Internal_subnet}
+
+ MEMBER_group:
+   type: OS::Keystone::Group
+   properties:
+     description: "Member group"
+     domain: default
+     name:
+       str_replace:
+         template: MEMBER_TENANT_%tenant_name%-%env%-tenantID%
+         params:
+           "tenantID%": {get_param: tenant_id}
+           "%tenant_name%": {get_param: tenant_name}
+           "%env%": {get_param: environment}
+     roles: [{"project": {get_resource: organisation_tenant}, "role": '_member_'}]
+
+ ADMIN_group:
+   type: OS::Keystone::Group
+   properties:
+     description: "Admin group"
+     domain: default
+     name: "tenant_admin_group"
+     name:
+       str_replace:
+         template: ADMIN_TENANT_%tenant_name%-%env%-tenantID%
+         params:
+           "tenantID%": {get_param: tenant_id}
+           "%tenant_name%": {get_param: tenant_name}
+           "%env%": {get_param: environment}
+     roles: [{"project": {get_resource: organisation_tenant}, "role": 'admin'}]
+
+ ADMIN_user:
+   type: OS::Keystone::UserRoleAssignment
+   properties:
+     roles: [{"project": {get_resource: organisation_tenant}, "role": 'admin'}]
+     user: admin
