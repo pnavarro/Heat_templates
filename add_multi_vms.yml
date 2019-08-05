@@ -1,0 +1,74 @@
+heat_template_version: 2013-05-23
+
+parameters:
+  number_of_vms:
+    type: number
+    description: number of identical VMs to create
+    default: 1
+
+  vm_prefix:
+    type: string
+    description: Default vm name
+    default: VM_rhOSP
+
+  key_name:
+    type: string
+    description: Name of an existing key pair to use for the server
+    default: demo-user
+    #constraints:
+    #  - custom_constraint: nova.keypair
+  flavor:
+    type: string
+    description: Flavor for the server to be created
+    default: rht.medium
+    constraints:
+      - custom_constraint: nova.flavor
+  image:
+    type: string
+    description: Image ID or image name to use for the server (Cirros)
+    default: 4e86049e-4035-4534-897b-20e89eb73e15
+    constraints:
+      - custom_constraint: glance.image
+  net0:
+    type: string
+    description: network for the server to be created (Devel)
+    default: 8243b9ae-c40f-4a35-bcba-575541711c3f
+    constraints:
+      - custom_constraint: neutron.network
+  net1:
+    type: string
+    description: network for the server to be created (Devel)
+    default: ac739a6a-becf-419e-9789-9f6936d319eb
+    constraints:
+      - custom_constraint: neutron.network
+  secgroup:
+    type: string
+    description: security group (Default)
+    default: 678e8d71-04d5-4dee-9515-e8df78bb8feb
+  nb_volumes:
+    type: number
+    description: number of additionnal persistant volumes
+    default: 0
+  volume_size:
+    type: number
+    description: size oif each additional volumes
+    default: 1
+
+resources:
+  rg:
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: {get_param: number_of_vms}
+      resource_def:
+        type: /opt/Cloudforms/heat_templates/add_new_server.yaml
+        properties:
+          index: "%index%"
+          vm_prefix: { get_param: vm_prefix }
+          key_name: {get_param: key_name}
+          flavor: {get_param: flavor}
+          image: {get_param: image}
+          net_0: {get_param: net0}
+          net_1: {get_param: net1}
+          secgroup: {get_param: secgroup}
+          nb_volumes: {get_param: nb_volumes}
+          volume_size: {get_param: volume_size}
