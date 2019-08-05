@@ -1,0 +1,120 @@
+heat_template_version: 2016-04-08
+
+description: Deploiement du projet pour les CSH
+
+parameters:
+  vm_prefix:
+    description: Projet de test pour les CSH
+    type: string
+    default: admin
+
+  key_name:
+    type: string
+    description: Name of an existing key pair to use for the server
+    default: Cloudforms-key
+    constraints:
+      - custom_constraint: nova.keypair
+  flavor:
+    type: string
+    description: Flavor for the server to be created
+    default: m1.small
+    constraints:
+      - custom_constraint: nova.flavor
+  image:
+    type: string
+    description: Image ID or image name to use for the server (PXE)
+    default:    dummy-4-PXE
+    constraints:
+      - custom_constraint: glance.image
+  secgroup:
+    type: string
+    description: security group (Default)
+    default: initial-2018-AM2CLOUD-ALL-OPEN
+  net_0:
+    type: string
+    description: security group (Default)
+    default: initial-2018-AM2CLOUD-ALL-OPEN
+  net_1:
+    type: string
+    description: security group (Default)
+    default: initial-2018-AM2CLOUD-ALL-OPEN
+  srv_group:
+    type: number
+    description: group de serveurs
+    default: 1
+
+  index:
+    type: number
+    description: id de server
+    default: 0
+
+  nb_volumes:
+    type: number
+    default: 0
+    description: nombre de volmumes additionnels
+
+  volume_size:
+    type: number
+    description: taille des volumes additionnels
+    default: 0
+resources:
+
+  port_private0:
+    type: OS::Neutron::Port
+    properties:
+      port_security_enabled: False
+      network: { get_param: net_0 }
+      #fixed_ips:
+      #- ip_address:
+      #    str_replace:
+      #      template: "$VMNAME%group%%index%"
+      #      params:
+      #        $VMNAME: "172.18.0."
+      #        "%index%": { get_param: index}
+      #        "%group%": { get_param: srv_group}
+
+  port_private1:
+    type: OS::Neutron::Port
+    properties:
+      port_security_enabled: False
+      network: { get_param: net_1 }
+      #fixed_ips:
+      #- ip_address:
+      #    str_replace:
+      #      template: "$VMNAME%group%%index%"
+      #      params:
+      #        $VMNAME: "172.17.0."
+      #        "%index%": { get_param: index}
+      #        "%group%": { get_param: srv_group}
+
+
+  rg_volume:
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: { get_param: nb_volumes}
+      resource_def:
+        type: /opt/Cloudforms/heat_templates/add_volume_to_vm.yaml
+        properties:
+          name:
+            str_replace:
+              template: "$INSTANCE-storage-%index%"
+              params:
+                $INSTANCE: { get_attr: [instance, name] }
+          volume_size: { get_param: volume_size }
+          instance: { get_resource: instance }
+
+  instance:
+    type: OS::Nova::Server
+    properties:
+      name:
+        str_replace:
+          template: "$VMPREFIX-%index%"
+          params:
+            $VMPREFIX: { get_param: vm_prefix}
+            "%index%": { get_param: index}
+      key_name: { get_param: key_name }
+      flavor: { get_param: flavor }
+      image: { get_param: image }
+      networks:
+        - { port: { get_resource: port_private0} }
+        - { port: { get_resource: port_private1} }
