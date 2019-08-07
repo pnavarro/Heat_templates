@@ -8,24 +8,21 @@ parameters:
  tenant_id:
    type: string
    description: organisation ID
+ flavor_disk: {Default: 0, Description: Size of local disk in GB. The "0" size is a special case that uses the native base image size as the size of the ephemeral root volume., Type: Number}
+ flavor_ephemeral: {Default: 0, Description: Size of a secondary ephemeral data disk in GB., Type: Number}
+ is_flavor_public:
+   AllowedValues: ['True', 'true', 'False', 'false']
+   Default: true
+   Description: Scope of flavor accessibility. Public or private. Default value is
+      True, means public, shared across all projects.
+   Type: Boolean
+ flavor_name: {Description: Name of the flavor., Type: String}
+ flavor_ram: {Description: Memory in MB for the flavor., Type: Number}
+ flavor_swap: {Default: 0, Description: Swap space in MB., Type: Number}
+ flavor_vcpus: {Description: Number of VCPUs for the flavor., Type: Number}
  environment:
    type: string
    description: organisation ID
-  flavor_disk: {Default: 0, Description: Size of local disk in GB. The "0" size is a special
-      case that uses the native base image size as the size of the ephemeral root
-      volume., Type: Number}
-  flavor_ephemeral: {Default: 0, Description: Size of a secondary ephemeral data disk in
-      GB., Type: Number}
-  is_flavor_public:
-    AllowedValues: ['True', 'true', 'False', 'false']
-    Default: true
-    Description: Scope of flavor accessibility. Public or private. Default value is
-      True, means public, shared across all projects.
-    Type: Boolean
-  flavor_name: {Description: Name of the flavor., Type: String}
-  flavor_ram: {Description: Memory in MB for the flavor., Type: Number}
-  flavor_swap: {Default: 0, Description: Swap space in MB., Type: Number}
-  flavor_vcpus: {Description: Number of VCPUs for the flavor., Type: Number}
 resources:
  organisation_tenant:
    type: OS::Keystone::Project
