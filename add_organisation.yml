@@ -27,16 +27,6 @@ parameters:
   flavor_swap: {Default: 0, Description: Swap space in MB., Type: Number}
   flavor_vcpus: {Description: Number of VCPUs for the flavor., Type: Number}
 resources:
-  Flavor:
-    Properties:
-      disk: {get_param: flavor_disk}
-      ephemeral: {get_param: flavor_ephemeral}
-      is_public: {get_param: is_flavor_public}
-      name: {get_param: flavor_name}
-      ram: {get_param: flavor_ram}
-      swap: {get_param: flavor_swap}
-      vcpus: {get_param: flavor_vcpus}
-    Type: OS::Nova::Flavor
  organisation_tenant:
    type: OS::Keystone::Project
    properties:
@@ -49,6 +39,17 @@ resources:
            "tenantID%": {get_param: tenant_id}
      domain: default
      description: {get_param: tenant_name}
+ flavor:
+   type: OS::Nova::Flavor
+   properties:
+     disk: {get_param: flavor_disk}
+     ephemeral: {get_param: flavor_ephemeral}
+     is_public: {get_param: is_flavor_public}
+     name: {get_param: flavor_name}
+     ram: {get_param: flavor_ram}
+     swap: {get_param: flavor_swap}
+     vcpus: {get_param: flavor_vcpus}
+     tenants: [{get_param: tenant_id}]
 
     #   : ======================================================
     #   : Quota definitions - those that are commented are

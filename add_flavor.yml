@@ -1,0 +1,60 @@
+Description: Initial template of NovaFlavor
+HeatTemplateFormatVersion: '2012-12-12'
+Outputs:
+  OS::stack_id:
+    Value: {Ref: NovaFlavor}
+  extra_specs:
+    Description: Extra specs of the flavor in key-value pairs.
+    Value:
+      Fn::GetAtt: [NovaFlavor, extra_specs]
+  is_public:
+    Description: Whether the flavor is shared across all projects.
+    Value:
+      Fn::GetAtt: [NovaFlavor, is_public]
+  show:
+    Description: Detailed information about resource.
+    Value:
+      Fn::GetAtt: [NovaFlavor, show]
+Parameters:
+  disk: {Default: 0, Description: Size of local disk in GB. The "0" size is a special
+      case that uses the native base image size as the size of the ephemeral root
+      volume., Type: Number}
+  ephemeral: {Default: 0, Description: Size of a secondary ephemeral data disk in
+      GB., Type: Number}
+  extra_specs: {Description: Key/Value pairs to extend the capabilities of the flavor.,
+    Type: Json}
+  flavorid: {Description: 'Unique ID of the flavor. If not specified, an UUID will
+      be auto generated and used.', Type: String}
+  is_public:
+    AllowedValues: ['True', 'true', 'False', 'false']
+    Default: true
+    Description: Scope of flavor accessibility. Public or private. Default value is
+      True, means public, shared across all projects.
+    Type: Boolean
+  name: {Description: Name of the flavor., Type: String}
+  ram: {Description: Memory in MB for the flavor., Type: Number}
+  rxtx_factor: {Default: 1.0, Description: RX/TX factor., Type: Number}
+  swap: {Default: 0, Description: Swap space in MB., Type: Number}
+  tenants:
+    Default: []
+    Description: List of tenants.
+    Type: CommaDelimitedList
+  vcpus: {Description: Number of VCPUs for the flavor., Type: Number}
+Resources:
+  NovaFlavor:
+    Properties:
+      disk: {get_param: disk}
+      ephemeral: {get_param: ephemeral}
+      extra_specs: {get_param: extra_specs}
+      flavorid: {get_param: flavorid}
+      is_public: {get_param: is_public}
+      name: {get_param: name}
+      ram: {get_param: ram}
+      rxtx_factor: {get_param: rxtx_factor}
+      swap: {get_param: swap}
+      tenants:
+        Fn::Split:
+        - ','
+        - {get_param: tenants}
+      vcpus: {get_param: vcpus}
+    Type: OS::Nova::Flavor
